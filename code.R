@@ -49,6 +49,19 @@ load("/DATA07/home/shlee/Mopheus/Final/slingshot_Final_0101.robj")
 #CellChat
 load('/DATA07/home/shlee/Mopheus/Final/Pre_CellChatFinal_CB.robj')
 load('/DATA07/home/shlee/Mopheus/Final/Pre_CellChatFinal_NCB.robj')
+# PrePost_TNK
+load('/DATA07/home/shlee/Mopheus/Final/Pre_Post_TNK_Final01.robj')
+
+# PrePost CD8T
+load('/DATA07/home/shlee/Mopheus/Final/PrePost_CD8Tcell_Final.robj')
+# PrePost CD8TMain
+load('/DATA07/home/shlee/Mopheus/Final/PrePost_Tcell_Main.robj')
+# PrePost Myeloid
+load('/DATA07/home/shlee/Mopheus/Final/Pre_Post_Myeloid_Final01.robj')
+# PrePost Macrophage
+load('/DATA07/home/shlee/Mopheus/Final/Pre_Post_Macrophage_Final01.robj')
+# PrePost TCR
+TCR_data <- readRDS('PrePost_TCR_Final.rds')
 
 #################################### Marker ################################################
 
@@ -619,211 +632,549 @@ DotPlot(obj_CD8T_S1, features = "CXCR3")
 # Figure3G
 DotPlot(obj_CD8T_S1, features = "CXCR3", group.by = 'TNK_celltype1', split.by = 'ClinicalBenefit') 
 
-################################ Supplementary Figure1 ##################################################
+#################################### Figure4 #############################################
+# Figure4A
 
-# Supple Figure1A
-DimPlot(obj_pre, group.by = "CellType", cols = use_colors)
+Idents(scrna_mor04_CD8T) <- 'treatment'
+markers.cluster1 <- FindMarkers(scrna_mor04_CD8T, ident.1 = "Post", ident.2 = "Pre", min.pct = 0.25, logfc.threshold = 0.25, verbose = FALSE)
+data <- markers.cluster1
+EnhancedVolcano(data,
+                lab = rownames(data),
+                x = 'avg_log2FC',
+                y = 'p_val_adj',
+                pointSize = 0.3,
+                labSize = 3,
+                drawConnectors = TRUE,
+                widthConnectors = 0.15,
+                pCutoff = 0.05,
+                FCcutoff = 0.25,
+                labCol = 'black',
+                labFace = 'bold',
+                boxedLabels = F,
+                selectLab = c('PDCD1','CTLA4','LAG3', 'JUNB', 'GNLY', 'FOS', 'IL7R', 'JUN', 'TNFAIP3',
+                              'NKG7', 'PRF1', 'GZMK', 'GZMA', 'GZMB', 'ZNF683', 'HLA-DQA1', 'CCR7','DUSP8',
+                              'XCL1', 'CXCL13', 'SPP1', 'IFNG', 'CD7', 'TIGIT', 'VCAM1', 'PDCL3',
+                              'KLRC1', 'ANXA1', "CXCR4", 'JUND', 'DUSP4', 'NFKBIA', 'NFKBIZ', 'RPS29', 'RPS10', 'CXCL13',
+                              'HAVCR2', 'TNFALP3', 'NR4A2', 'DUSP2', 'SOCS3', 'SOCS1', 'DUSP5', 'AREG', 'TNFSF9',
+                              'TXNIP', 'PTGDR', 'HSPA1A', 'LPP', 'HSPA1B', 'TXK', 'S1PR5', 'CD40LG',
+                              'NCAM1', 'KLRG1', 'FOSB', 'IRF4', 'LINC00861', 'RPL38', 'GIMAP7', 'FGR', 'S1PR1', 'RORA', 'KLRB1',
+                              'SPON2', 'VIM', 'TNFRSF9', 'CX3CR1', 'FGFBP2', 'S100A4', 'S100A6', 'LGALS1'))   
 
-# Supple Figure1B
-mainmarkers <- c(
-  'KIT', 'MS4A2', 'GATA2',                    # Mast
-  'CD68', 'FCGR3A', 'MARCO', 'LYZ',           # Myeloid
-  'CD79A', 'IGHG3', 'IGHA2', 'JCHAIN',        # Bcell
-  'NKG7', 'GNLY', 'KLRD1','NCAM1',            # NK cells
-  'TRAC', 'CD3G', 'CD3E', 'CD3D',             # Tcell
-  'THY1','COL1A2','COL1A1', 'DCN',            # Fibroblast
-  'RAMP2', 'FLT1', 'CLDN5', 'PECAM1',         # Endothelial
-  "GPRC5A", "ALB", 'KRT19', 'EPCAM') 
-mainmarkers <- rev(mainmarkers)
+# Figure4B
 
-DotPlot(obj_pre, group.by="CellType", features = mainmarkers) + theme_bw() +
-  geom_point(aes(size=pct.exp), shape = 21, colour="black", stroke=0.5) +
-  scale_color_gradientn(colours = pals::brewer.orrd(10)) + 
-  theme(axis.text.x = element_text(angle=90, vjust=0.5, hjust=1, face = "bold")) +
-  theme(axis.text.y = element_text(face = "bold")) +
-  geom_hline(yintercept =seq(1.5, 24, 1), linetype="solid", size=0.5, color="black") 
+Idents(scrna_mor04_CD8T) <- 'treatment'
+markers.cluster1 <- FindMarkers(scrna_mor04_CD8T, ident.1 = "Post" , ident.2 = "Pre", min.pct = 0.25, logfc.threshold = 0.25, verbose = T)
+deg <- markers.cluster1
+input_genes = lapply(rownames(deg), function(x) strsplit(x, '[.]')[[1]][1]) %>% unlist()
+deg['ENTREZID'] = mapIds(org.Hs.eg.db, input_genes, 'ENTREZID', 'SYMBOL')
+deg = deg %>% arrange(desc(avg_log2FC))
+input_gsea = deg$avg_log2FC %>% as.numeric()
+names(input_gsea) = deg$ENTREZID %>% as.character()
 
-# Supple Figure1C
-Idents(obj_T_S) <- 'TNK_celltype1'
-DotPlot(obj_T_S, features = 'PDCD1')
+gse1 <- geneset::getGO(org = "human",ont = "bp")
+gsea1 <- genGSEA(input_gsea, gse1)
 
-# Supple Figure1D
-T_CD8 <- c('CX3CR1', 'ZNF683','IFIT1', 'IFIT2', 'IFIT3', 'TNFSF10', 'LTB', 'LTA', 'TNF', 'FASLG', 'GZMM', 'GZMK', 'GZMH', 'GZMB', 'GZMA', 'PRF1',
-           'NKG7', 'GNLY', 'KLRK1', 'KLRD1', 'KLRB1', 'IFNG')
+descript <- c( 'immune response',
+               'regulation of cell migration',
+               'cellular response to hypoxia',
+               'leukocyte differentiation',
+               'cell population proliferation',
+               'cellular response to abiotic stimulus',
+               'regulation of T cell activation',
+               'cellular response to radiation',
+               'adaptive immune response',
+               'regulation of immune response',
+               'antigen processing and presentation',
+               'activation of GTPase activity',
+               'icosanoid metabolic process')
 
-obj_TNK_S$ind <- "FALSE"
-obj_TNK_S$ind[obj_TNK_S$TNK_celltype1 %in% c('CD8 Tcm', 'CD8 Trm', 'CD8 Tem', 'CD8 Temra', 'CD8 Tex', 'CD8 IFN activating T')] <- TRUE
-obj_TNK_S_CD8 <- subset(obj_TNK_S, subset = ind == TRUE)
+gsea1_filtered <- gsea1
+gsea1_filtered$gsea_df <- gsea1$gsea_df[gsea1$gsea_df$Description %in% descript, ]
+plot_gsea(gsea1_filtered, "p.adjust", "bar")
 
-obj_TNK_S_CD8@meta.data <- droplevels(obj_TNK_S_CD8@meta.data)
-unique(obj_TNK_S_CD8$TNK_celltype1)
+plotGSEA(gsea1, plot_type = "bar", colour = c("red", "blue"), label_by = 'description')
 
-obj_TNK_S_CD8$TNK_celltype1 <- factor(obj_TNK_S_CD8$TNK_celltype1, levels = c('CD8 Tcm', 'CD8 Trm', 'CD8 Tem', 'CD8 Temra', 'CD8 Tex', 'CD8 IFN activating T'))
+# Figure4C
+radiation_gene <-list(c('EGR1','TIMP1','CRY1','CRIP1','TGFB1',
+                        'CDKN1A','BCL2L1','DDB2','COPS9','ERCC1',
+                        'ATF4','YY1','SPIDR','MDM2','INO80','GATA3',
+                        'CUL4A'))
 
-Idents(obj_TNK_S_CD8) <- "TNK_celltype1"
-expression_lv = as.data.frame(AverageExpression(obj_TNK_S_CD8), rownames = NULL)
+scrna_mor04_CD8T_Main <- AddModuleScore(scrna_mor04_CD8T_Main, features = radiation_gene, name = "Radiation_Score")
+
+Idents(scrna_mor04_CD8T_Main)<- 'treatment'
+Idents(scrna_mor04_CD8T_Main)<- 'TNK_Subset1_final_S'
+
+DotPlot(scrna_mor04_CD8T_Main, features = Radiation_Score1) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) + 
+  coord_flip()  
+
+# Figure 4D
+
+do_BoxPlot(sample = TCR_data, feature = "Clonality1", group.by = "cell_type_1",  split.by = "treatment", use_silhouette = F,  plot.grid = F,  axis.text.x.angle = 45, legend.position = "top",  font.size = 12, colors.use = col_prepost)
+
+# Figure 4E
+
+Idents(scrna_mor04_CD8T_Main1_post) <- 'TNK_Subset1_final_S'
+scrna_mor04_CD8T_Main1_post$TNK_Subset1_final_S <- factor(scrna_mor04_CD8T_Main1_post$TNK_Subset1_final_S,
+                                                          levels = c('CD8 Tcm', 'CD8 Tem', 'CD8 Tex', 'CD8 Temra', 'CD8 Trm'))
+
+DotPlot(scrna_mor04_CD8T_Main1_post, features = c('IFNG', 'PRF1', 'GZMB', 'GNLY', 'TNF'))
+
+# heatmap 
+
+cytokine_gene <- c('IFNG', 'PRF1', 'GZMB', 'GNLY', 'TNF')
+Idents(scrna_mor04_CD8T_Main1_post) <- "TNK_Subset1_final_S"
+
+expression_lv = as.data.frame(AverageExpression(scrna_mor04_CD8T_Main1_post), rownames = NULL)
 expression_lv = data.frame(gene = rownames(expression_lv), 'CD8_Tcm' = expression_lv$RNA.CD8.Tcm,
-                           'CD8_Trm' = expression_lv$RNA.CD8.Trm, 'CD8_Tem' = expression_lv$RNA.CD8.Tem,
-                           'CD8_Temra' = expression_lv$RNA.CD8.Temra, 'CD8 Tex' = expression_lv$RNA.CD8.Tex,
-                           'CD8 IFN activating T' = expression_lv$RNA.CD8.IFN.activating.T)
+                           'CD8_Tem' = expression_lv$RNA.CD8.Tem, 'CD8_Tex' = expression_lv$RNA.CD8.Tex,
+                           'CD8_Temra' = expression_lv$RNA.CD8.Temra, 'CD8 Trm' = expression_lv$RNA.CD8.Trm)
 
-chemo_mac = subset(expression_lv, subset = expression_lv$gene %in% T_CD8)
+
+chemo_mac = subset(expression_lv, subset = expression_lv$gene %in% cytokine_gene)
 head(chemo_mac)
 
 row.names(chemo_mac) = chemo_mac$gene
 chemo_mac[, 1] = NULL
 
 z_chemo_mac = apply(chemo_mac, 1, scale)
-new_mat = t(z_chemo_mac)
+#new_mat = t(z_chemo_mac)
 
-colnames(new_mat) <- c('CD8 Tcm', 'CD8 Trm', 'CD8 Tem', 'CD8 Temra', 'CD8 Tex', 'CD8 IFN activating T')
-library(pheatmap)
-T_CD8 <- rev(T_CD8)
-new_mat_ordered <- new_mat[T_CD8, ]
+rownames(z_chemo_mac) <- c('CD8 Tcm', 'CD8 Tem', 'CD8 Tex', 'CD8 Temra', 'CD8 Trm')
+#colnames(new_mat) <- c('CD8 Tcm', 'CD8 Tem', 'CD8 Tex', 'CD8 Temra', 'CD8 Trm')
 
-pheatmap(new_mat_ordered, main = 'TNK DEG', 
-         cluster_rows = F, cluster_cols = F, border_color = 'Black', angle_col = 90,
-         gaps_row = c(1, 6, 12, 17, 20, 21, 22))
+z_chemo_mac_scaled = apply(z_chemo_mac, 2, function(x) {
+  (2 * ((x - min(x)) / (max(x) - min(x)))) - 1
+})
 
-# Supple Figure1E
-DimPlot(obj_CD8T, group.by = 'TNK_celltype1')
-################################ Supplementary Figure2 ##################################################
+cytokine_gene1 <- c("IFNG", 'TNF', 'GZMB', 'GNLY', 'PRF1')
+new_mat_ordered <- z_chemo_mac_scaled[,cytokine_gene1 ]
 
-# Supple Figure2A
-Myeloidmarker <- c('FCN1', 'VCAN', 'S100A9', 'S100A12',
-                   'FCGR3A', 'CDKN1C', 'MTSS1', 'RHOC',
-                   'OLR1', 'EREG', 'G0S2', 'IL1B',
-                   'CXCL10', 'CXCL9', 'CXCL11', 'GBP5',
-                   'FOLR2', 'SLC40A1', 'RNASE1', 'MAF',
-                   'SPP1', 'MMP9', 'MMP19', 'SULT1C2',
-                   'TREM2', 'EMP1', 'LGALS3', 'CSTB')
+library(RColorBrewer)
+pheatmap(new_mat_ordered, main = 'TNK DEG', scale = 'column',
+         cluster_rows = F, cluster_cols = F, border_color = 'Black', angle_col = 0,
+         color = rev(brewer.pal(n = 9, name = "RdYlBu")))
 
-Idents(obj_Myeloid1s_pre1) <- 'Myeloid_celltype_final1_s'
-expression_lv = as.data.frame(AverageExpression(obj_Myeloid1s_pre1), rownames = NULL)
+# Figure 4F
 
-expression_lv = data.frame(gene = rownames(expression_lv), 'CD14' = expression_lv$RNA.CD14..Monocyte,
-                           'CD16' = expression_lv$RNA.CD16..Monocyte, 'OLR1' = expression_lv$RNA.OLR1..Monocyte,
-                           'CXCL10' = expression_lv$RNA.CXCL10..Macrophage,
-                           'FOLR2' = expression_lv$RNA.FOLR2..Macrophage,
-                           'SPP1' = expression_lv$RNA.SPP1..Macrophage,
-                           'TREM2' = expression_lv$RNA.TREM2..Macrophage)
+library(monocle3)
+cds <- as.cell_data_set(scrna_mor04_CD8T_Main)
+cds <- estimate_size_factors(cds)
+cds <- preprocess_cds(cds, num_dim = 100)
+cds <- align_cds(cds, alignment_group = "sample_id")
+cds <- reduce_dimension(cds)
+cds <- cluster_cells(cds)
+cds <- learn_graph(cds, use_partition = T)
+cds <- order_cells(cds)
 
-obj_Myeloid1s_pre1$Myeloid_celltype_final1_s <- factor(obj_Myeloid1s_pre1$Myeloid_celltype_final1_s, levels = c('CD14+ Monocyte', 'CD16+ Monocyte',
-                                                                                                                'OLR1+ Monocyte',  
-                                                                                                                'CXCL10+ Macrophage', 'FOLR2+ Macrophage',
-                                                                                                                'SPP1+ Macrophage','TREM2+ Macrophage'))
+reduced_data <- reducedDims(cds)$UMAP  
+cell_meta_data <- colData(cds)
+scrna_mor04_CD8T_Main$TNK_Subset1_final_S
 
-chemo_mac = subset(expression_lv, subset = expression_lv$gene %in% Myeloidmarker)
-head(chemo_mac)
+new_dats <- data.frame(
+  X = reduced_data[, 1],  
+  Y = reduced_data[, 2],  
+  TNK_Subset1_final_S = cell_meta_data$TNK_Subset1_final_S,
+  treatment = cell_meta_data$treatment
+)
+library(ggpointdensity)
 
-row.names(chemo_mac) = chemo_mac$gene
-chemo_mac[, 1] = NULL
-
-z_chemo_mac = apply(chemo_mac, 1, scale)
-new_mat = t(z_chemo_mac)
-
-colnames(new_mat) <- c('CD14+ Monocyte', 'CD16+ Monocyte',
-                       'OLR1+ Monocyte', 'CXCL10+ Macrophage',
-                       'FOLR2+ Macrophage','SPP1+ Macrophage','TREM2+ Macrophage')
-
-library(pheatmap)
-Myeloidmarker <- rev(Myeloidmarker)
-myeloid_markers_ordered <- new_mat[Myeloidmarker, ]
-
-pheatmap(myeloid_markers_ordered, main = 'Myeloid DEG', 
-         cluster_rows = F, cluster_cols = F, border_color = 'Black', angle_col = 90)
-
-# Supple Figure2B
-
-obj_Myeloid1s_pre1$Myeloid_celltype_final1_s
-
-dat <- table(obj_Myeloid1s_pre1$sample_id, obj_Myeloid1s_pre1$Myeloid_celltype_final1_s)
-dat <- prop.table(table(obj_Myeloid1s_pre1$sample_id, obj_Myeloid1s_pre1$Myeloid_celltype_final1_s),1)
-dat <- as.data.frame(dat)
-colnames(dat) <- c("Batch", "M_Celltype", "Freq")
-
-dat$percent <- dat$Freq * 100
-
-dat$ClinicalBenefit <- "none"
-
-dat$ClinicalBenefit[dat$Batch == 'MORSCRHBOT00101'] <- 'Non-Responder'
-dat$ClinicalBenefit[dat$Batch == 'MORSCRHBOT00102'] <- 'Non-Responder'
-dat$ClinicalBenefit[dat$Batch == 'MORSCRHBOT00202'] <- 'Responder'
-dat$ClinicalBenefit[dat$Batch == 'MORSCRHBOT00402'] <- 'Responder'
-dat$ClinicalBenefit[dat$Batch == 'MORSCRHBOT00702'] <- 'Responder'
-dat$ClinicalBenefit[dat$Batch == 'MORSCRHBOT00901'] <- 'Responder' 
-
-dat$ClinicalBenefit <- factor(dat$ClinicalBenefit, levels = c("Responder", "Non-Responder"))
-
-ggplot(dat, aes(x = M_Celltype, y = Freq, fill = ClinicalBenefit)) + 
-  geom_boxplot(width = 0.5, color = "black", outlier.shape = NA, position = position_dodge(width = 0.75)) + 
-  ylab("Relative frequency") + 
-  xlab("") + 
-  ylim(0, 0.7) + 
-  geom_signif(
-    comparisons = list(c("Responder", "NonResponder")), 
-    test = "t.test", 
-    map_signif_level = TRUE, 
-    step_increase = 0.1, 
-    y_position = 0.5  
-  ) +
-  theme_bw() +
+ggplot(new_dats, aes(x = X, y = Y)) +
+  geom_point(color = "grey", size = 1) +
+  geom_pointdensity(data = new_dats[new_dats$treatment == "Pre",]) +
+  scale_color_viridis() +
+  theme_minimal() +  # 배경을 흰색으로 설정
   theme(
     panel.background = element_blank(),
     panel.grid = element_blank(),
-    axis.text.x = element_text(color = "black", size = 9, face = "bold", angle = 90, hjust = 1),
-    axis.text.y = element_text(color = "black", size = 11, face = "bold"),
-    legend.title = element_text(color = "black", size = 12, face = "bold"),
-    legend.text = element_text(color = "black", size = 10),
-    axis.title.x = element_text(color = "black", size = 12, face = "bold"),
-    axis.title.y = element_text(color = "black", size = 12, face = "bold"),
-    title = element_text(color = "black", size = 14, face = "bold"),
-    legend.position = "top"
-  ) +
-  labs(fill = "Response")  
+    axis.text = element_blank(),  
+    axis.ticks = element_blank(),
+    panel.border = element_rect(color = "grey", fill = NA, size = 1) 
+  )
 
-# Supple Figure 2C
+ggplot(new_dats, aes(x = X, y = Y)) +
+  geom_point(color = "grey", size = 1) +
+  geom_pointdensity(data = new_dats[new_dats$treatment == "Post",]) +
+  scale_color_viridis() +
+  theme_minimal() +  # 배경을 흰색으로 설정
+  theme(
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.text = element_blank(),  
+    axis.ticks = element_blank(),
+    panel.border = element_rect(color = "grey", fill = NA, size = 1) 
+  )
 
-CD274_enrichedScore <- AddModuleScore(obj_Myeloid1s_pre1, features = CD274_enriched, name="CD274_enriched")
-CD274_scores <- CD274_enrichedScore@meta.data$CD274_enriched1
-sample_id <- obj_Myeloid1s_pre1@meta.data$sample_id 
+# Figure4G
+library(slingshot)
+sc <- scrna_mor04_CD8T_Main
+sc <- FindNeighbors(sc, reduction="harmony",dims = 1:40)
+sc <- FindClusters(sc, resolution = 4)
+DimPlot(sc, group.by = 'RNA_snn_res.4', label = T, repel = T)
+#DimPlot(sc, cells.highlight = rownames(sc@meta.data)[sc$seurat_clusters == '15'])
 
-data <- data.frame(
-  sample_id = sample_id,
-  CD274_scores1 = CD274_scores,
-  Celltype = obj_Myeloid1s_pre1@meta.data$Myeloid_celltype_final1_s
+DefaultAssay(sc) = 'RNA'
+Idents(sc) = 'RNA_snn_res.4'
+
+reduction = 'umap'
+sds = slingshot(Embeddings(sc, reduction)[,1:2], clusterLabels = Idents(sc), start.clus = '20')
+sc@tools[['slingshot']] = SlingshotDataSet(sds)
+pseudotime = slingPseudotime(sds)
+head(pseudotime)
+#pseudotime %>% as.data.frame() %>%
+# write.table(paste0(outdir, "slingshot.pseudotime.txt"), sep="\t", row.names = TRUE, col.names = TRUE)
+curves = colnames(pseudotime)
+palette = viridis(100, end = 0.95)
+head(rd)
+# add reduceDim
+rd <- Embeddings(sc, reduction)[,1:2] %>% as.matrix()
+rd <- rd[colnames(sc),]
+
+sc$slingshot_pseudotime_curve1 = pseudotime[,1]
+sc$slingshot_pseudotime_curve2 = pseudotime[,2]
+sc$slingshot_pseudotime_curve3 = pseudotime[,3]
+sc$slingshot_pseudotime_curve4 = pseudotime[,4]
+sc$slingshot_pseudotime_curve5 = pseudotime[,5]
+sc$slingshot_pseudotime_curve6 = pseudotime[,6]
+sc$slingshot_pseudotime_curve7 = pseudotime[,7]
+sc$slingshot_pseudotime_curve8 = pseudotime[,8]
+sc$slingshot_pseudotime_curve9 = pseudotime[,9]
+
+df <- sc@meta.data
+psts <- slingPseudotime(sds) %>%
+  as.data.frame() %>%
+  mutate(cells = rownames(.),
+         conditions = df$treatment) %>%
+  pivot_longer(starts_with("Lineage"), values_to = "pseudotime", names_to = "lineages")
+
+#TCRdata load
+load("/DATA02/home/jyhwang4/mormor/mormor.rdata")
+head(meta1t)
+colnames(meta1t) <- c("cells", "Clonality2")
+psts <- left_join(psts, meta1t, by = c("cells"))
+head(psts)
+psts1 <- subset(psts, lineages == 'Lineage1')
+psts2 <- subset(psts, lineages == 'Lineage2')
+psts3 <- subset(psts, lineages == 'Lineage3')
+psts4 <- subset(psts, lineages == 'Lineage4')
+psts5 <- subset(psts, lineages == 'Lineage5')
+psts6 <- subset(psts, lineages == 'Lineage6')
+psts7 <- subset(psts, lineages == 'Lineage7')
+psts8 <- subset(psts, lineages == 'Lineage8')
+psts9 <- subset(psts, lineages == 'Lineage9')
+
+ggplot(psts1, aes(x = pseudotime,  fill = conditions)) +
+  geom_density(alpha = 0.5) +
+  scale_fill_brewer(type = "qual") +
+  theme_bw()+
+  ylim(0,0.3) +
+  #xlim(0,1) +
+  theme(legend.position = "bottom",
+        panel.grid.major = element_blank(),
+        axis.text.x = element_text(face = "bold", size = 10, color = "black"),
+        axis.text.y = element_text(face = "bold", size = 10, color = "black"))
+
+FeaturePlot(sc, 
+            feature = 'slingshot_pseudotime_curve1', 
+            cols = c('red', 'yellow')) +
+  ggtitle('') +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank()) +
+  labs(colour = 'Pseudotime')
+
+###################### Clonality ###############################
+psts1_Pre <- psts1[,c("cells", "pseudotime", "Clonality2", "conditions")]
+psts1_Pre <- subset(psts1_Pre, conditions %in% "Pre")
+psts1_Post <- psts1[,c("cells","pseudotime", "Clonality2", "conditions")]
+psts1_Post<- subset(psts1_Post, conditions %in% "Post")
+head(psts1_Pre)
+
+colnames(psts1_Pre) <- c("cells","x", "y", "group")
+colnames(psts1_Post) <- c("cells","x", "y", "group")
+
+rownames(psts1_Pre) <- psts1_Pre$cells
+rownames(psts1_Post) <- psts1_Post$cells
+
+psts1_Pre <- na.omit(psts1_Pre)
+psts1_Post <- na.omit(psts1_Post)
+
+library(dplyr)
+library(ggplot2)
+
+summarize_data <- function(data, bin_width = 0.5) {
+  data %>%
+    mutate(x_bin = floor(x / bin_width) * bin_width) %>%
+    group_by(x_bin) %>%
+    summarise(
+      x = mean(x, na.rm = TRUE),
+      weighted_mean = sum(y) / n(),
+      .groups = 'drop'
+    ) %>%
+    na.omit()
+}
+
+binned_Pre <- summarize_data(psts1_Pre, bin_width = 0.4)
+binned_Post <- summarize_data(psts1_Post, bin_width = 0.4)
+
+
+plot_tcr_line <- function(data1, data2, interval = 1, x_limits = c(0, 10)) {
+   x_values <- seq(x_limits[1], x_limits[2], by = interval)
+      points_data1 <- data1 %>%
+    mutate(nearest_x = sapply(x, function(val) x_values[which.min(abs(x_values - val))])) %>%
+    filter(abs(x - nearest_x) < interval)
+    points_data2 <- data2 %>%
+    mutate(nearest_x = sapply(x, function(val) x_values[which.min(abs(x_values - val))])) %>%
+    filter(abs(x - nearest_x) < interval)
+  
+  p <- ggplot() +
+    geom_line(data = data1, aes(x = x, y = weighted_mean), color = "blue", size = 1) +
+    geom_line(data = data2, aes(x = x, y = weighted_mean), color = "red", size = 1) +
+    xlab("Pseudotime") + ylab("Weighted Clonality (Mean)") +
+    scale_x_continuous(limits = x_limits) +  # x축 범위 고정
+    theme_minimal() +
+    theme(
+      legend.position = "none",
+      axis.title = element_text(size = 14),
+      axis.text = element_text(size = 12)
+    )
+  
+  p <- p + 
+    geom_point(data = points_data1, aes(x = x, y = weighted_mean), color = "blue", size = 3) +
+    geom_point(data = points_data2, aes(x = x, y = weighted_mean), color = "red", size = 3) +
+    theme(legend.position = "bottom",
+          panel.grid.major = element_blank(),
+          axis.text.x = element_text(face = "bold", size = 13, color = "black"),
+          axis.text.y = element_text(face = "bold", size = 13, color = "black"),
+          axis.line = element_line(size = 1.2, color = "black")
+    )
+  
+  return(p)
+}
+
+p_line <- plot_tcr_line(binned_Pre, binned_Post, interval = 1, x_limits = c(0, 10))
+print(p_line)
+
+#################################### Figure 5 ###############################################
+# Figure5A 
+
+DimPlot(scrna_mor04_Myeloid1, group.by ='Myeloid_celltype_Final1', label = T, split.by = 'Treatment')
+
+# Figure5B
+Idents(scrna_mor04_Macrophage) <- 'treatment'
+unique(scrna_mor04_Macrophage$treatment)
+markers.cluster1 <- FindMarkers(scrna_mor04_Macrophage, ident.1 = "Post", ident.2 = "Pre", min.pct = 0.25, logfc.threshold = 0.5, verbose = FALSE)
+data <- markers.cluster1
+
+EnhancedVolcano(data,
+                lab = rownames(data),
+                x = 'avg_log2FC',
+                y = 'p_val_adj',
+                pCutoff = 0.05,
+                FCcutoff = 1,
+                pointSize = 2.5,
+                labSize = 3.0,
+                title = 'Volcano plot with EnhancedVolcano',
+                legendPosition = 'right',
+                legendLabSize = 14,
+                drawConnectors = TRUE,
+                colAlpha = 0.70,
+                #gridlines.major = FALSE,
+                #gridlines.minor = FALSE,
+                widthConnectors = 0.1,
+                colConnectors = 'grey30'
+)
+unique(scrna_mor04_Myeloid1$sample_id)
+
+# Figure5C
+
+library(monocle3)
+cds <- as.cell_data_set(scrna_mor04_Myeloid1)
+cds <- estimate_size_factors(cds)
+cds <- preprocess_cds(cds, num_dim = 100)
+cds <- align_cds(cds, alignment_group = "sample_id")
+cds <- reduce_dimension(cds)
+cds <- cluster_cells(cds)
+cds <- learn_graph(cds, use_partition = T)
+cds <- order_cells(cds)
+
+plot_cells(cds,
+           color_cells_by = 'Pseudotime',
+           cell_size=1.1,
+           label_groups_by_cluster = FALSE,
+           label_branch_points = FALSE,
+           label_roots = FALSE,
+           label_leaves = FALSE,
+           group_label_size =0)
+
+# Figure5D
+
+reduced_data <- reducedDims(cds)$UMAP  
+cell_meta_data <- colData(cds)
+
+new_dats <- data.frame(
+  X = reduced_data[, 1],  
+  Y = reduced_data[, 2],  
+  Myeloid_celltype_Final1 = cell_meta_data$Myeloid_celltype_Final1,
+  treatment = cell_meta_data$treatment
 )
 
-sample_data <- data %>%
-  group_by(sample_id,Celltype) %>%
-  summarize(mean_CD274 = mean(CD274_scores1, na.rm = TRUE)) %>% ungroup()
+library(ggpointdensity)
 
-library(ggpubr)
-sample_data$Celltype  <- factor(sample_data$Celltype, levels = c("CD14+ Monocyte", "CD16+ Monocyte", "OLR1+ Monocyte",
-                                                                 "CXCL10+ Macrophage", "FOLR2+ Macrophage", "SPP1+ Macrophage", 
-                                                                 "TREM2+ Macrophage"))
+ggplot(new_dats, aes(x = X, y = Y)) +
+  geom_point(color = "grey", size = 1) +
+  geom_pointdensity(data = new_dats[new_dats$treatment == "Pre",]) +
+  scale_color_viridis() +
+  theme_minimal() +  # 배경을 흰색으로 설정
+  theme(
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.text = element_blank(),  
+    axis.ticks = element_blank(),
+    panel.border = element_rect(color = "grey", fill = NA, size = 1) 
+  )
 
-ggplot(sample_data, aes(x=Celltype, y=mean_CD274, fill = Celltype)) +  geom_boxplot() + stat_summary(fun.y=mean, geom="point", shape=23, size=1.1, fill = "red") +xlab("")+ylab("Frequency")+
-  theme_bw()+
-  theme(panel.background = element_blank(),
-        axis.text.x =element_text(angle = 90, hjust = 1, size = 9,face="bold"),
-        axis.text.y = element_text(color="black",size = 11,face="bold"),
-        legend.title = element_text(color="black",size=15,face="bold"),
-        legend.text = element_text(color="black",size=7),
-        strip.text.x = element_text(angle = 0,face="bold",size=6),
-        axis.title.x = element_text(color="black",size = 12,face="bold"),
-        title = element_text(color="black",size = 12,face="bold")) +
-  ggtitle("CD274 Expression by Cell Type")
+ggplot(new_dats, aes(x = X, y = Y)) +
+  geom_point(color = "grey", size = 1) +
+  geom_pointdensity(data = new_dats[new_dats$treatment == "Post",]) +
+  scale_color_viridis() +
+  theme_minimal() +  # 배경을 흰색으로 설정
+  theme(
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.text = element_blank(),  
+    axis.ticks = element_blank(),
+    panel.border = element_rect(color = "grey", fill = NA, size = 1) 
+  )
 
-# Supple Figure2C
-cellchat_CB_S <- cellchat
-cellchat_NCB_S <- cellchat
-object.list <- list(CB = cellchat_CB_S, NCB = cellchat_NCB_S)
-cellchat <- mergeCellChat(object.list, add.names = names(object.list))
+# Figure5E
 
-gg1 <- compareInteractions(cellchat, show.legend = F, group = c(1,2))
-gg2 <- compareInteractions(cellchat, show.legend = F, group = c(1,2), measure = "weight")
-gg1 + gg2
+library(CellChat)
+
+cellchat <- createCellChat(object = obj_Pre, group.by = "CellType1", assay = "RNA")
+
+cellchat<-setIdent(cellchat,ident.use= "CellType1") # set "labels" as default cell identity
+levels(cellchat@idents) # show factor levels of the cell labels
+groupSize<-as.numeric(table(cellchat@idents)) # number of cells in each cell group
+CellChatDB<-CellChatDB.human# useCellChatDB.mouseif running on mouse data
+showDatabaseCategory(CellChatDB)
+dplyr::glimpse(CellChatDB$interaction)
+CellChatDB$interaction$annotation
+#CellChatDB.use <-subsetDB(CellChatDB, search = "Secreted Signaling") # use Secreted Signaling
+CellChatDB.use=CellChatDB
+cellchat@DB<-CellChatDB.use
+cellchat<-subsetData(cellchat) # This step is necessary even if using the whole database
+#future::plan("multiprocess", workers = 4) # do parallel
+cellchat<-identifyOverExpressedGenes(cellchat)
+cellchat<-identifyOverExpressedInteractions(cellchat)
+cellchat<-smoothData(cellchat, adj = PPI.human)
+cellchat<-computeCommunProb(cellchat) #오래걸림
+cellchat<-filterCommunication(cellchat,min.cells= 10)
+cellchat<-computeCommunProbPathway(cellchat)
+cellchat<-aggregateNet(cellchat)
+groupSize<-as.numeric(table(cellchat@idents))
+
+cellchat_Pre <- cellchat
+
+cellchat <- createCellChat(object = obj_Post, group.by = "CellType1", assay = "RNA")
+
+cellchat<-setIdent(cellchat,ident.use= "CellType1") # set "labels" as default cell identity
+levels(cellchat@idents) # show factor levels of the cell labels
+groupSize<-as.numeric(table(cellchat@idents)) # number of cells in each cell group
+CellChatDB<-CellChatDB.human# useCellChatDB.mouseif running on mouse data
+showDatabaseCategory(CellChatDB)
+dplyr::glimpse(CellChatDB$interaction)
+CellChatDB$interaction$annotation
+#CellChatDB.use <-subsetDB(CellChatDB, search = "Secreted Signaling") # use Secreted Signaling
+CellChatDB.use=CellChatDB
+cellchat@DB<-CellChatDB.use
+cellchat<-subsetData(cellchat) # This step is necessary even if using the whole database
+#future::plan("multiprocess", workers = 4) # do parallel
+cellchat<-identifyOverExpressedGenes(cellchat)
+cellchat<-identifyOverExpressedInteractions(cellchat)
+cellchat<-smoothData(cellchat, adj = PPI.human)
+cellchat<-computeCommunProb(cellchat) #오래걸림
+cellchat<-filterCommunication(cellchat,min.cells= 10)
+cellchat<-computeCommunProbPathway(cellchat)
+cellchat<-aggregateNet(cellchat)
+groupSize<-as.numeric(table(cellchat@idents))
+
+cellchat_Post <- cellchat
+
+####################### cell type colors $$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+cell_colors <- c(
+  "CD4 Treg"  = "#F17587", 
+  "CD4 Tcm"  = "#3CB44B",  
+  "CD8 Tex"  = "#3256C8",  
+  "CD8 Tem"  = "#0082C8",  
+  "CD8 Tcm"  = "#1CDE33",  
+  "CD8 Temra"  = "#911EB4",
+  "CD8 Trm"  = "#BC1083", 
+  "CD4 Tem"  = "#B5737C", 
+  "CD8 Proliferative"  = "#9DC214", 
+  "CXCL10+ Macrophage" = "#1C89B0",
+  "TREM2+ Macrophage" = "#008080", 
+  "FOLR2+ Macrophage" = "#F032E6", 
+  "CD4 CXCL13+" = "#AA6E28",  
+  "FABP4+ Macrophage" = "red" 
+)
+
+cell_colors
+cell_colors_Pre <- cell_colors[ !names(cell_colors) %in% "FABP4+ Macrophage" ]
+cell_colors_Post <- cell_colors[ !names(cell_colors) %in% "CD4 CXCL13+" ]
+
+cells_Pre <- rownames(cellchat_Pre@net$count)
+color_use_Pre <- cell_colors_Pre[ match(cells_Pre, names(cell_colors_Pre)) ]
+
+cells_Post <- rownames(cellchat_Post@net$count)
+color_use_Post <- cell_colors_Post[ match(cells_Post, names(cell_colors_Post)) ]
+
+# Pre-treatment plot
+netVisual_circle(
+  cellchat_Pre@net$count, 
+  vertex.weight = groupSize_Pre, 
+  weight.scale = TRUE, 
+  label.edge = FALSE, 
+  color.use = color_use_Pre,  
+  title.name = "Number of interactions (Pre)")
+
+# Post-treatment plot
+netVisual_circle(
+  cellchat_Post@net$count, 
+  vertex.weight = groupSize_Post, 
+  weight.scale = TRUE, 
+  label.edge = FALSE, 
+  color.use = color_use_Post,  
+  title.name = "Number of interactions (Post)")
+
+targetdata <- unique(T_obj$TNK_Subset1_final_S)
+sourcedata <- unique(Myeloid_obj$Myeloid_celltype_Final1)   
+
+par(mfrow = c(1,1))
+pathways.show <- c("ICOS") 
+netVisual_aggregate(cellchat_Post, signaling = pathways.show, layout = "circle",vertex.weight = groupSize_Post,
+                    vertex.label.cex = 1, weight.scale = TRUE,sources.use = sourcedata,  targets.use = targetdata,
+                    vertex.receiver = vertex.receiver, color.use = color_use_Post)
+
+# Figure5G
+pathways.show <- c("PVR") 
+netVisual_aggregate(cellchat_Post, signaling = pathways.show, layout = "circle",vertex.weight = groupSize_Post,
+                    vertex.label.cex = 'none' ,weight.scale = TRUE,sources.use = sourcedata,  targets.use = targetdata,
+                    vertex.receiver = vertex.receiver, color.use = color_use_Post)
+
+# Figure5F
+
+Idents(scrna_mor04_Macrophage_Post) <- 'Myeloid_celltype_Final1'
+Idents(scrna_mor04_CD8T_Main_post) <- 'TNK_Subset1_final_S'
+DotPlot(scrna_mor04_Macrophage_Post, features = 'ICOSLG')
+DotPlot(scrna_mor04_CD8T_Main_post, features = c('ICOS', 'CTLA4'))
+
+# Figure5H
+Idents(scrna_mor04_Macrophage_Post) <- 'Myeloid_celltype_Final1'
+Idents(scrna_mor04_CD8T_Main_post) <- 'TNK_Subset1_final_S'
+DotPlot(scrna_mor04_Macrophage_Post, features = 'PVR')
+DotPlot(scrna_mor04_CD8T_Main_post, features = c('CD226', 'TIGIT'))
+
 
 
 
